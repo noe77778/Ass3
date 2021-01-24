@@ -17,4 +17,8 @@ void VTK_Write_Vectors(int, struct grid*, struct EMfield*);
 
 void VTK_Write_Scalars(int, struct grid*, struct interpDensSpecies*, struct interpDensNet*);
 
+void VTK_Write_Vectors_Binary(int, struct grid*, struct EMfield*, struct parameters*);
+
+void VTK_Write_Scalars_Binary(int, struct grid*, struct interpDensSpecies*, struct interpDensNet*, struct parameters*);
+
 #endif

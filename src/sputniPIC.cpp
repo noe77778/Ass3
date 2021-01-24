@@ -116,8 +116,8 @@ int main(int argc, char **argv){
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
-            VTK_Write_Vectors(cycle, &grd,&field);
-            VTK_Write_Scalars(cycle, &grd,ids,&idn);
+            VTK_Write_Vectors_Binary(cycle, &grd,&field, &param);
+            VTK_Write_Scalars_Binary(cycle, &grd,ids,&idn, &param);
         }
         
         eInterp += (cpuSecond() - iInterp); // stop timer for interpolation

@@ -1,11 +1,7 @@
 # From https://x.momo86.net/?p=29
 
 CXX=g++
-CXXFLAGS=-std=c++11 -I./include -O3 -g -Xcompiler -Wall
-
-NVCC=nvcc
-ARCH=sm_30
-NVCCFLAGS= -I./include -arch=$(ARCH) -std=c++11 -O3 -g -Xcompiler -Wall --compiler-bindir=$(CXX)
+CXXFLAGS=-std=c++11 -I./include -O3 -g -Wall
 
 SRCDIR=src
 SRCS=$(shell find $(SRCDIR) -name '*.cu' -o -name '*.cpp')
@@ -26,14 +22,11 @@ ${BIN}:
 	mkdir -p $(BIN)
 
 $(BIN)/$(TARGET): $(OBJS)
-	$(NVCC) $(NVCCFLAGS) $+ -o $@
-
-$(SRCDIR)/%.o: $(SRCDIR)/%.cu
-	$(NVCC) $(NVCCFLAGS) $< -c -o $@
+	$(CXX) $(NVCCFLAGS) $+ -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	[ -d $(OBJDIR) ] || mkdir $(OBJDIR)
-	$(NVCC) $(CXXFLAGS) $< -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 clean:
 	rm -rf $(OBJS)

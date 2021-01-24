@@ -1,7 +1,9 @@
 #include "Particles.h"
 #include "Alloc.h"
+#ifdef USE_GPU
 #include <cuda.h>
 #include <cuda_runtime.h>
+#endif
 
 /** allocate particle arrays */
 void particle_allocate(struct parameters* param, struct particles* part, int is)

@@ -1,6 +1,7 @@
 #ifndef Alloc_H
 #define Alloc_H
 #include <cstdio>
+#ifdef USE_GPU
 #include <cuda_runtime.h>
 
 __host__ __device__
@@ -26,7 +27,7 @@ inline long get_idx(long x, long y, long s1)
 {
     return x + (y * s1);
 }
-
+#endif
 
 template < class type >
 inline type *newArr1(size_t sz1)
