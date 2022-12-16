@@ -30,6 +30,8 @@
 // Read and output operations
 #include "RW_IO.h"
 
+#define Db 512
+
 void copyfunc(struct particles* part, struct particles* particlesGPU)
 {
     FPpart* device_x, * device_y, * device_z, * device_u, * device_v, * device_w, * device_q;
@@ -225,16 +227,16 @@ int main(int argc, char **argv){
         
         // wrapper goes here 
         //////////////////////////////////////////////////////////////
-        gpu_mover_PC<<<dim3(largestNumParticles / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(particlesGPU, fieldGPU, grdGPU, paramGPU);
+        gpu_mover_PC<<<dim3(largestNumParticles / Db + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(particlesGPU, fieldGPU, grdGPU, paramGPU);
         
         //gpu_mover_PC_wrapper(particlesGPU, fieldGPU, grdGPU, paramGPU, largestNumParticles);
         ///////////////////////////////////////////////////////////////
         // bring back part, field, grd and param 
         // bb =  vrought back to host (from device)
-        cudaMemcpy (bb_part,particlesGPU, // size of original one?, cudaMemcpyDeviceToHost);
-        cudaMemcpy (bb_field,fieldGPU, // size of original one?, cudaMemcpyDeviceToHost);
-        cudaMemcpy (bb_grd,grdGPU, // size of original one?, cudaMemcpyDeviceToHost);
-        cudaMemcpy (bb_param,paramGPU, // size of original one?, cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_part,particlesGPU, sizeof(particles), cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_field,fieldGPU, sizeof(EMfield), cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_grd,grdGPU, sizeof(grd), cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_param,paramGPU, sizeof(parameters), cudaMemcpyDeviceToHost);
             
         
         // interpolation particle to grid
