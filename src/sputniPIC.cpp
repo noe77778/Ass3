@@ -66,6 +66,7 @@ int main(int argc, char **argv){
     
     // Read the inputfile and fill the param structure
     parameters param;
+    parameters bb_param;
     // Read the input file name from command line
     readInputFile(&param,argc,argv);
     printParameters(&param);
@@ -77,10 +78,12 @@ int main(int argc, char **argv){
     
     // Set-up the grid information
     grid grd;
+    grid bb_grd;
     setGrid(&param, &grd);
     
     // Allocate Fields
     EMfield field;
+    EMfield bb_field;
     field_allocate(&grd,&field);
     EMfield_aux field_aux;
     field_aux_allocate(&grd,&field_aux);
@@ -97,6 +100,7 @@ int main(int argc, char **argv){
     
     // Allocate Particles
     particles *part = new particles[param.ns];
+    particles *bb_part = new particles[bb_param.ns];
     // allocation
     for (int is=0; is < param.ns; is++){
         particle_allocate(&param,&part[is],is);
