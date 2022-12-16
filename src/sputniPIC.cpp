@@ -34,7 +34,7 @@
 
 void copyfunc(struct particles* part, struct particles* particlesGPU)
 {
-    FPpart* device_x, * device_y, * device_z, * device_u, * device_v, * device_w, * device_q;
+    FPpart* dev_x, * dev_y, * dev_z, * dev_u, * dev_v, * dev_w, * dev_q;
     size_t size_device = part->npmax * sizeof(FPpart);
 
     cudaMalloc(&dev_x, size_device);
