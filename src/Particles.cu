@@ -140,7 +140,7 @@ __device__ void subcycling(particles * part, EMfield * field, grid * grd, parame
                 }
                 else { // REFLECTING BC
                     part->v[idxX] = -part->v[idxX];
-                    part->y[particle_index] = 2 * grd->Ly - part->y[idxX];
+                    part->y[idxX] = 2 * grd->Ly - part->y[idxX];
                 }
             }
 
