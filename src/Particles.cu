@@ -4,6 +4,37 @@
 #include <cuda_runtime.h>
 
 
+void copyfunc(struct particles* part, struct particles* particlesGPU)
+{
+    FPpart* dev_x, * dev_y, * dev_z, * dev_u, * dev_v, * dev_w, * dev_q;
+    size_t size_device = part->npmax * sizeof(FPpart);
+
+    cudaMalloc(&dev_x, size_device);
+    cudaMalloc(&dev_y, size_device);
+    cudaMalloc(&dev_z, size_device);
+    cudaMalloc(&dev_u, size_device);
+    cudaMalloc(&dev_v, size_device);
+    cudaMalloc(&dev_w, size_device);
+    cudaMalloc(&dev_q, size_device);
+
+    cudaMemcpy(dev_x, part->x, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_y, part->y, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_z, part->z, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_u, part->u, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_v, part->v, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_w, part->w, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_q, part->q, size_device, cudaMemcpyHostToDevice);
+
+    cudaMemcpy(&(particlesGPU->x), &dev_x, sizeof(particlesGPU->x), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->y), &dev_y, sizeof(particlesGPU->y), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->z), &dev_z, sizeof(particlesGPU->z), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->u), &dev_u, sizeof(particlesGPU->u), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->v), &dev_v, sizeof(particlesGPU->v), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->w), &dev_w, sizeof(particlesGPU->w), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->q), &dev_q, sizeof(particlesGPU->q), cudaMemcpyHostToDevice);
+}
+
+
 
 __device__ void subcycling(particles * part, EMfield * field, grid * grd, parameters * param, int idxX)
 {
