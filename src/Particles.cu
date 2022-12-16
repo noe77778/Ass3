@@ -263,12 +263,12 @@ __device__ void subcycling(particles * part, EMfield * field, grid * grd, parame
 }
 
 // GPU version 
-__global__ void mover_PC_gpu(particles* part, EMfield* field, grid* grd, parameters* param)
+__global__ void mover_PC_gpu(particles* parts, EMfield* field, grid* grd, parameters* param)
 {
     int idxX = blockIdx.x * blockDim.x + threadIdx.x;
     int idxY = blockIdx.y * blockDim.y + threadIdx.y;
 
-    particles* part = &(part[idxY]);
+    particles* part = &(parts[idxY]);
 
     if (idxX < part->nop)
 
