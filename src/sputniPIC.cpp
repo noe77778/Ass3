@@ -32,35 +32,7 @@
 
 #define Db 512
 
-void copyfunc(struct particles* part, struct particles* particlesGPU)
-{
-    FPpart* dev_x, * dev_y, * dev_z, * dev_u, * dev_v, * dev_w, * dev_q;
-    size_t size_device = part->npmax * sizeof(FPpart);
 
-    cudaMalloc(&dev_x, size_device);
-    cudaMalloc(&dev_y, size_device);
-    cudaMalloc(&dev_z, size_device);
-    cudaMalloc(&dev_u, size_device);
-    cudaMalloc(&dev_v, size_device);
-    cudaMalloc(&dev_w, size_device);
-    cudaMalloc(&dev_q, size_device);
-
-    cudaMemcpy(dev_x, part->x, size_device, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_y, part->y, size_device, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_z, part->z, size_device, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_u, part->u, size_device, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_v, part->v, size_device, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_w, part->w, size_device, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_q, part->q, size_device, cudaMemcpyHostToDevice);
-
-    cudaMemcpy(&(particlesGPU->x), &dev_x, sizeof(particlesGPU->x), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(particlesGPU->y), &dev_y, sizeof(particlesGPU->y), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(particlesGPU->z), &dev_z, sizeof(particlesGPU->z), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(particlesGPU->u), &dev_u, sizeof(particlesGPU->u), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(particlesGPU->v), &dev_v, sizeof(particlesGPU->v), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(particlesGPU->w), &dev_w, sizeof(particlesGPU->w), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(particlesGPU->q), &dev_q, sizeof(particlesGPU->q), cudaMemcpyHostToDevice);
-}
 
 int main(int argc, char **argv){
     
@@ -112,23 +84,15 @@ int main(int argc, char **argv){
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     
     particles *particlesGPU = new particles[param.ns];
-    EMfield *fieldGPU;
-    struct grid *grdGPU;
-    parameters *paramGPU;
-    
     cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
-    cudaMalloc(&fieldGPU, sizeof(EMfield));
-    cudaMalloc(&grdGPU, sizeof(grid));
-    cudaMalloc(&paramGPU, sizeof(parameters));
-    
     cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
-    cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
-    cudaMemcpy(grdGPU, &grd, sizeof(grid), cudaMemcpyHostToDevice);
-    cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
-    
     for (int is=0; is < param.ns; is++) copyfunc(&part[is], &particlesGPU[is]); 
     
-    // field
+    EMfield *fieldGPU;
+    cudaMalloc(&fieldGPU, sizeof(EMfield));
+    cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
+    
+     // field
     FPfield *dev_fieldEx, *dev_fieldEy, *dev_fieldEz, *dev_fieldBxn, *dev_fieldByn, *dev_fieldBzn;
 
     cudaMalloc(&dev_fieldEx, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
@@ -154,7 +118,10 @@ int main(int argc, char **argv){
     
     // field end 
     
-    // grid
+    struct grid *grdGPU;
+    cudaMalloc(&grdGPU, sizeof(grid));
+    cudaMemcpy(grdGPU, &grd, sizeof(grid), cudaMemcpyHostToDevice);
+      // grid
     
     FPfield *dev_grdXN, *dev_grdYN, *dev_grdZN;
 
@@ -172,8 +139,11 @@ int main(int argc, char **argv){
     
     // grid end 
     
-
-    //EMfield *fieldGPU;
+    parameters *paramGPU;
+    cudaMalloc(&paramGPU, sizeof(parameters));
+    cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
+    
+     //EMfield *fieldGPU;
     //cudaMalloc(&fieldGPU, sizeof(EMfield));
     //cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
     //field_copy_cpu2gpu(&grd, &field, fieldGPU);  // Correct the pointers of the arrays
