@@ -30,6 +30,35 @@
 // Read and output operations
 #include "RW_IO.h"
 
+void copyfunc(struct particles* part, struct particles* particlesGPU)
+{
+    FPpart* device_x, * device_y, * device_z, * device_u, * device_v, * device_w, * device_q;
+    size_t size_device = part->npmax * sizeof(FPpart);
+
+    cudaMalloc(&dev_x, size_device);
+    cudaMalloc(&dev_y, size_device);
+    cudaMalloc(&dev_z, size_device);
+    cudaMalloc(&dev_u, size_device);
+    cudaMalloc(&dev_v, size_device);
+    cudaMalloc(&dev_w, size_device);
+    cudaMalloc(&dev_q, size_device);
+
+    cudaMemcpy(dev_x, part->x, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_y, part->y, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_z, part->z, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_u, part->u, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_v, part->v, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_w, part->w, size_device, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_q, part->q, size_device, cudaMemcpyHostToDevice);
+
+    cudaMemcpy(&(particlesGPU->x), &dev_x, sizeof(particlesGPU->x), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->y), &dev_y, sizeof(particlesGPU->y), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->z), &dev_z, sizeof(particlesGPU->z), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->u), &dev_u, sizeof(particlesGPU->u), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->v), &dev_v, sizeof(particlesGPU->v), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->w), &dev_w, sizeof(particlesGPU->w), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(particlesGPU->q), &dev_q, sizeof(particlesGPU->q), cudaMemcpyHostToDevice);
+}
 
 int main(int argc, char **argv){
     
@@ -74,6 +103,104 @@ int main(int argc, char **argv){
     // Initialization
     initGEM(&param,&grd,&field,&field_aux,part,ids);
     
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    particles *particlesGPU = new particles[param.ns];
+    EMfield *fieldGPU;
+    struct grid *grdGPU;
+    parameters *paramGPU;
+    
+    cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
+    cudaMalloc(&fieldGPU, sizeof(EMfield));
+    cudaMalloc(&grdGPU, sizeof(grid));
+    cudaMalloc(&paramGPU, sizeof(parameters));
+    
+    cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
+    cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(grdGPU, &grd, sizeof(grid), cudaMemcpyHostToDevice);
+    cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
+    
+    for (int is=0; is < param.ns; is++) copyfunc(&part[is], &particlesGPU[is]); 
+    
+    // field
+    FPfield *dev_fieldEx, *dev_fieldEy, *dev_fieldEz, *dev_fieldBxn, *dev_fieldByn, *dev_fieldBzn;
+
+    cudaMalloc(&dev_fieldEx, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_fieldEy, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_fieldEz, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_fieldBxn, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_fieldByn, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_fieldBzn, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+
+    cudaMemcpy(dev_fieldEx, field->Ex_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_fieldEy, field->Ey_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_fieldEz, field->Ez_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_fieldBxn, field->Bxn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_fieldByn, field->Byn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_fieldBzn, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(&(fieldGPU->Ex_flat), &dev_fieldEx, sizeof(fieldGPU->Ex_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Ey_flat), &dev_fieldEy, sizeof(fieldGPU->Ey_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Ez_flat), &dev_fieldEz, sizeof(fieldGPU->Ez_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Bxn_flat), &dev_fieldBxn, sizeof(fieldGPU->Bxn_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Byn_flat), &dev_fieldByn, sizeof(fieldGPU->Byn_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Bzn_flat), &dev_fieldBzn, sizeof(fieldGPU->Bzn_flat), cudaMemcpyHostToDevice);
+    
+    // field end 
+    
+    // grid
+    
+    FPfield *dev_grdXN, *dev_grdYN, *dev_grdZN;
+
+    cudaMalloc(&dev_grdXN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_grdYN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_grdZN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+
+    cudaMemcpy(dev_grdXN, grd->XN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_grdYN, grd->YN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_grdZN, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(&(grdGPU->XN_flat), &dev_grdXN, sizeof(grdGPU->XN_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->YN_flat), &dev_grdYN, sizeof(grdGPU->YN_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->ZN_flat), &dev_grdZN, sizeof(grdGPU->ZN_flat), cudaMemcpyHostToDevice);
+    
+    // grid end 
+    
+
+    //EMfield *fieldGPU;
+    //cudaMalloc(&fieldGPU, sizeof(EMfield));
+    //cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
+    //field_copy_cpu2gpu(&grd, &field, fieldGPU);  // Correct the pointers of the arrays
+
+    //struct grid *grdGPU;
+    //cudaMalloc(&grdGPU, sizeof(grid));
+    //cudaMemcpy(grdGPU, &grd, sizeof(grid), cudaMemcpyHostToDevice);
+    //setGridGPU(&param, &grd, grdGPU);  // Correct the pointers of the arrays
+
+    //parameters *paramGPU;
+    //cudaMalloc(&paramGPU, sizeof(parameters));
+    //cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
+    
+    
+    // not neccesary 
+    //interpDensSpecies *idsGPU = new interpDensSpecies[param.ns]; // this dont in use
+    //interpDensSpecies *idsGPU2CPU = new interpDensSpecies[param.ns];
+    //cudaMalloc(&idsGPU, sizeof(interpDensSpecies) * param.ns);
+    //for (int is=0; is < param.ns; is++)
+        //interp_dens_species_copy_cpu2gpu(&grd, &ids[is], &idsGPU[is]);  // Correct the pointers of the arrays
+    //std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done later (in every iteration)
+    // not neccesary 
+    
+    int largestNumParticles = 0;
+    for (int i = 0; i < param.ns; i++) {
+        if (part[i].nop > largestNumParticles) {
+            largestNumParticles = part[i].nop;
+        }
+    }
+
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    
     
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
@@ -92,32 +219,45 @@ int main(int argc, char **argv){
         
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
-        for (int is=0; is < param.ns; is++)
-            mover_PC(&part[is],&field,&grd,&param);
+        //for (int is=0; is < param.ns; is++)
+            //mover_PC(&part[is],&field,&grd,&param);  // kernel launch 
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
+        // wrapper goes here 
+        //////////////////////////////////////////////////////////////
+        gpu_mover_PC<<<dim3(largestNumParticles / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(particlesGPU, fieldGPU, grdGPU, paramGPU);
         
-        
+        //gpu_mover_PC_wrapper(particlesGPU, fieldGPU, grdGPU, paramGPU, largestNumParticles);
+        ///////////////////////////////////////////////////////////////
+        // bring back part, field, grd and param 
+        // bb =  vrought back to host (from device)
+        cudaMemcpy (bb_part,particlesGPU, // size of original one?, cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_field,fieldGPU, // size of original one?, cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_grd,grdGPU, // size of original one?, cudaMemcpyDeviceToHost);
+        cudaMemcpy (bb_param,paramGPU, // size of original one?, cudaMemcpyDeviceToHost);
+            
         
         // interpolation particle to grid
         iInterp = cpuSecond(); // start timer for the interpolation step
         // interpolate species
         for (int is=0; is < param.ns; is++)
-            interpP2G(&part[is],&ids[is],&grd);
+            interpP2G(&bb_part[is],&ids[is],&grd); // for bb
+        
+        
         // apply BC to interpolated densities
         for (int is=0; is < param.ns; is++)
-            applyBCids(&ids[is],&grd,&param);
+            applyBCids(&ids[is],&bb_grd,&bb_param);
         // sum over species
-        sumOverSpecies(&idn,ids,&grd,param.ns);
+        sumOverSpecies(&idn,ids,&bb_grd,bb_param.ns);
         // interpolate charge density from center to node
-        applyBCscalarDensN(idn.rhon,&grd,&param);
+        applyBCscalarDensN(idn.rhon,&grd,&bb_param);
         
         
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
-            VTK_Write_Vectors(cycle, &grd,&field);
-            VTK_Write_Scalars(cycle, &grd,ids,&idn);
+            VTK_Write_Vectors(cycle, &bb_grd,&bb_field);
+            VTK_Write_Scalars(cycle, &bb_grd,ids,&idn);
         }
         
         eInterp += (cpuSecond() - iInterp); // stop timer for interpolation
@@ -139,7 +279,11 @@ int main(int argc, char **argv){
         particle_deallocate(&part[is]);
     }
     
-    
+    cudaFree (particlesGPU);
+    cudaFree (fieldGPU);
+    cudaFree (grdGPU);                
+    cudaFree (paramGPU);         
+                    
     // stop timer
     double iElaps = cpuSecond() - iStart;
     
