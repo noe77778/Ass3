@@ -3,20 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-// GPU version 
-__global__ void mover_PC_gpu(particles* part, EMfield* field, grid* grd, parameters* param)
-{
-    int idxX = blockIdx.x * blockDim.x + threadIdx.x;
-    int idxY = blockIdx.y * blockDim.y + threadIdx.y;
 
-    particles* part = &(part[idxY]);
-
-    if (idxX < part->nop)
-
-    {
-        subcycling(part,field,grd,param,idxX);
-    }
-}
 
 __device__ void subcycling(particles * part, EMfield * field, grid * grd, parameters * param, int idxX)
 {
@@ -174,6 +161,21 @@ __device__ void subcycling(particles * part, EMfield * field, grid * grd, parame
                     part->z[idxX] = -part->z[idxX];
                 }
             }
+}
+
+// GPU version 
+__global__ void mover_PC_gpu(particles* part, EMfield* field, grid* grd, parameters* param)
+{
+    int idxX = blockIdx.x * blockDim.x + threadIdx.x;
+    int idxY = blockIdx.y * blockDim.y + threadIdx.y;
+
+    particles* part = &(part[idxY]);
+
+    if (idxX < part->nop)
+
+    {
+        subcycling(part,field,grd,param,idxX);
+    }
 }
 
 /** allocate particle arrays */
